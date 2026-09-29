@@ -22,8 +22,18 @@ export default function AppShell({ title, children }: { title: string; children:
   const path = usePathname();
   const router = useRouter();
   const [dark, setDark] = useState(false);
-  const email = typeof window === "undefined" ? "" : localStorage.getItem("email") ?? "";
-  useEffect(() => { document.documentElement.classList.toggle("dark", dark); }, [dark]);
+  const [email, setEmail] = useState("");
+  const [updated, setUpdated] = useState("");
+
+  useEffect(() => {
+    setEmail(localStorage.getItem("email") ?? "");
+    setUpdated(new Date().toLocaleDateString());
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+  }, [dark]);
+
   return (
     <div className="sage">
       <aside className="sage-nav">
@@ -50,7 +60,7 @@ export default function AppShell({ title, children }: { title: string; children:
         <div className="sage-head">
           <div>
             <h1>{title}</h1>
-            <p className="muted">Last update {new Date().toLocaleDateString()}</p>
+            <p className="muted">{updated ? `Last update ${updated}` : "Workspace"}</p>
           </div>
         </div>
         {children}
