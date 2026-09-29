@@ -1,5 +1,5 @@
 export const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8010";
-export const API = typeof window === "undefined" ? BACKEND : "/api";
+export const API = BACKEND;
 
 export function saveTokens(access: string, refresh: string, email: string): void {
   localStorage.setItem("access", access);
@@ -48,14 +48,18 @@ export async function api<T>(path: string, init: RequestInit = {}, retried = fal
   try {
     res = await fetch(`${API}${path}`, { ...init, headers });
   } catch {
-    throw new Error(`Cannot reach API. Confirm uvicorn is on port 8010.`);
+    throw new Error(`Cannot reach API at ${API}. Start uvicorn on port 8010, then retry.`);
   }
   if (res.status === 401 && !retried) {
     const ok = await refreshAccess();
     if (ok) return api<T>(path, init, true);
     if (typeof window !== "undefined") window.location.href = "/login";
   }
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message ?? data.detail ?? data.code ?? "request failed");
+  const text = await res.text();
+  let data: { message?: string; detail?: string; code?: string } = {};
+  try { data = text ? JSON.parse(text) : {}; } catch {
+    throw new Error(text.slice(0, 120) || `HTTP ${res.status}`);
+  }
+  if (!res.ok) throw new Error(data.message ?? (typeof data.detail === "string" ? data.detail : undefined) ?? data.code ?? "request failed");
   return data as T;
 }
