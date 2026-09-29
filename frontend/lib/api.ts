@@ -1,4 +1,6 @@
-export const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8010";
+export const BACKEND = typeof window !== "undefined"
+  ? `http://${window.location.hostname}:8010`
+  : "http://127.0.0.1:8010";
 export const API = BACKEND;
 
 export function saveTokens(access: string, refresh: string, email: string): void {
@@ -44,12 +46,18 @@ export async function api<T>(path: string, init: RequestInit = {}, retried = fal
   headers.set("Content-Type", "application/json");
   const access = token();
   if (access) headers.set("Authorization", `Bearer ${access}`);
-  let res: Response;
-  try {
-    res = await fetch(`${API}${path}`, { ...init, headers });
-  } catch {
-    throw new Error(`Cannot reach API at ${API}. Start uvicorn on port 8010, then retry.`);
+  const host = typeof window !== "undefined" ? window.location.hostname : "127.0.0.1";
+  const bases = [`http://${host}:8010`, "http://127.0.0.1:8010", "http://localhost:8010"];
+  let res: Response | null = null;
+  for (const base of bases) {
+    try {
+      res = await fetch(`${base}${path}`, { ...init, headers });
+      break;
+    } catch {
+      res = null;
+    }
   }
+  if (!res) throw new Error("Cannot reach API on port 8010. Confirm http://127.0.0.1:8010/health opens.");
   if (res.status === 401 && !retried) {
     const ok = await refreshAccess();
     if (ok) return api<T>(path, init, true);
