@@ -3,28 +3,27 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import AppShell from "../components/AppShell";
 import { api } from "@/lib/api";
-type Project = { id: string; title: string; description?: string; code?: string; start_date?: string; end_date?: string; status?: string };
+type Project = { id: string; title: string; description?: string; code?: string; status?: string };
 const STAGES = [
   { id: "backlog", label: "Backlog" },
   { id: "in_progress", label: "In Progress" },
   { id: "review", label: "Review" },
   { id: "done", label: "Done" },
 ];
-const EMPTY = { title: "", description: "", code: "", start_date: "", end_date: "", budget: "", status: "backlog" };
+const EMPTY = { title: "", description: "", code: "", status: "backlog" };
 export default function BoardsPage() {
   const [items, setItems] = useState<Project[]>([]);
   const [form, setForm] = useState(EMPTY);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
-  async function load() { setItems(await api<Project[]>("/projects")); }
+  async function load() {
+    try { setItems(await api<Project[]>("/projects")); }
+    catch { setItems(await api<Project[]>("/boards")); }
+  }
   useEffect(() => { load().catch((err: Error) => setError(err.message)); }, []);
   async function create() {
     if (!form.title.trim()) return;
-    try {
-      await api("/projects", { method: "POST", body: JSON.stringify(form) });
-    } catch {
-      await api("/boards", { method: "POST", body: JSON.stringify({ title: form.title }) });
-    }
+    await api("/boards", { method: "POST", body: JSON.stringify({ title: form.title }) });
     setForm(EMPTY); setOpen(false); setError(""); await load();
   }
   async function move(id: string, status: string) {
@@ -32,8 +31,8 @@ export default function BoardsPage() {
     await load();
   }
   async function remove(id: string) {
-    if (!window.confirm("Delete this project?")) return;
-    await api(`/projects/${id}`, { method: "DELETE" });
+    try { await api(`/projects/${id}`, { method: "DELETE" }); }
+    catch { await api(`/boards/${id}`, { method: "DELETE" }); }
     await load();
   }
   return (
@@ -51,7 +50,6 @@ export default function BoardsPage() {
                 <article className="item" key={project.id}>
                   <span className="chip">{project.code || "Project"}</span>
                   <h3><Link href={`/dashboard/board/${project.id}`}>{project.title}</Link></h3>
-                  <p className="muted">{project.description || "Open board"}</p>
                   <select value={project.status || "backlog"} onChange={(e) => move(project.id, e.target.value).catch((err: Error) => setError(err.message))}>
                     {STAGES.map((opt) => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
                   </select>
@@ -70,11 +68,6 @@ export default function BoardsPage() {
           <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); create().catch((err: Error) => setError(err.message)); }}>
             <h2>New project</h2>
             <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Name" />
-            <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Code" />
-            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Description" />
-            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              {STAGES.map((opt) => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
-            </select>
             <p className="toolbar"><button type="submit">Create</button><button type="button" onClick={() => setOpen(false)}>Cancel</button></p>
           </form>
         </div>
