@@ -25,6 +25,11 @@ def _out(board):
         "budget": getattr(board, "budget", ""),
     }
 
+@router.get("/projects")
+def list_projects(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+    ids = AccessService(db).list_board_ids(user_id)
+    return [_out(b) for b in BoardService(db).list_for(ids)]
+
 @router.post("/projects")
 def create_project(body: CreateProject, user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
     return _out(BoardService(db).create(user_id, body.title, body.model_dump()))
