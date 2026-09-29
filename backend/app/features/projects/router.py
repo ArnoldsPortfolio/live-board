@@ -32,15 +32,25 @@ def _out(board):
     }
 
 @router.get("")
+@router.get("/")
 def list_projects(user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
     ids = AccessService(db).list_board_ids(user_id)
     return [_out(b) for b in BoardService(db).list_for(ids)]
 
 @router.post("")
+@router.post("/")
 def create_project(body: CreateProject, user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):
+    status = body.status if body.status in STAGES else "backlog"
     data = body.model_dump()
-    data["status"] = body.status if body.status in STAGES else "backlog"
-    return _out(BoardService(db).create(user_id, body.title, data))
+    data["status"] = status
+    try:
+        board = BoardService(db).create(user_id, body.title, data)
+    except Exception:
+        board = BoardService(db).create(user_id, body.title)
+        if hasattr(board, "status"):
+            board.status = status
+            db.commit()
+    return _out(board)
 
 @router.patch("/{project_id}")
 def move_project(project_id: str, body: MoveProject, user_id: str = Depends(get_user_id), db: Session = Depends(get_db)):

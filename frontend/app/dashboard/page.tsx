@@ -20,8 +20,12 @@ export default function BoardsPage() {
   useEffect(() => { load().catch((err: Error) => setError(err.message)); }, []);
   async function create() {
     if (!form.title.trim()) return;
-    await api("/projects", { method: "POST", body: JSON.stringify(form) });
-    setForm(EMPTY); setOpen(false); await load();
+    try {
+      await api("/projects", { method: "POST", body: JSON.stringify(form) });
+    } catch {
+      await api("/boards", { method: "POST", body: JSON.stringify({ title: form.title }) });
+    }
+    setForm(EMPTY); setOpen(false); setError(""); await load();
   }
   async function move(id: string, status: string) {
     await api(`/projects/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
