@@ -31,14 +31,27 @@ export default function BoardsPage() {
     await load();
   }
   async function remove(id: string) {
+    if (!window.confirm("Delete this project?")) return;
     try { await api(`/projects/${id}`, { method: "DELETE" }); }
     catch { await api(`/boards/${id}`, { method: "DELETE" }); }
     await load();
   }
   return (
     <AppShell title="Project Dashboard">
-      <p className="toolbar"><button type="button" onClick={() => { setForm(EMPTY); setOpen(true); }}>+ New project</button></p>
+      <p className="toolbar">
+        <button type="button" onClick={() => { setForm(EMPTY); setOpen(true); }}>+ New project</button>
+      </p>
       {error ? <p className="err">{error}</p> : null}
+      {open ? (
+        <form className="modal" style={{ margin: "0 0 1rem", position: "static", width: "min(420px, 100%)" }} onSubmit={(e) => { e.preventDefault(); create().catch((err: Error) => setError(err.message)); }}>
+          <h2>New project</h2>
+          <input required autoFocus value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Name" />
+          <p className="toolbar">
+            <button type="submit">Create</button>
+            <button type="button" onClick={() => setOpen(false)}>Cancel</button>
+          </p>
+        </form>
+      ) : null}
       <div className="board">
         {STAGES.map((stage) => {
           const rows = items.filter((p) => (p.status || "backlog") === stage.id);
@@ -63,15 +76,6 @@ export default function BoardsPage() {
           );
         })}
       </div>
-      {open ? (
-        <div className="modal-back" onClick={() => setOpen(false)}>
-          <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); create().catch((err: Error) => setError(err.message)); }}>
-            <h2>New project</h2>
-            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Name" />
-            <p className="toolbar"><button type="submit">Create</button><button type="button" onClick={() => setOpen(false)}>Cancel</button></p>
-          </form>
-        </div>
-      ) : null}
     </AppShell>
   );
 }
