@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.db import Base
 from app.deps import SessionLocal, engine, settings
-from app.features.boards.projects import router as projects_router
+from app.features.boards.projects import router as board_projects_router
 from app.features.boards.router import router as boards_router
+from app.features.projects.router import router as projects_router
 from app.features.calendar.router import router as calendar_router
 from app.features.identity.router import router as identity_router
 from app.features.realtime.router import router as realtime_router
@@ -39,6 +40,7 @@ def health():
 
 app.include_router(identity_router)
 app.include_router(boards_router)
+app.include_router(board_projects_router)
 app.include_router(projects_router)
 app.include_router(realtime_router)
 app.include_router(calendar_router)
