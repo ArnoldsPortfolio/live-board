@@ -51,3 +51,29 @@ class OperationRow(Base):
     actor_id: Mapped[str] = mapped_column(String(36))
     kind: Mapped[str] = mapped_column(String(40))
     payload: Mapped[str] = mapped_column(Text, default="{}")
+
+class ShareLinkRow(Base):
+    __tablename__ = "share_links"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    board_id: Mapped[str] = mapped_column(ForeignKey("boards.id"), index=True)
+    token: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    role: Mapped[str] = mapped_column(String(24), default="member")
+
+class HistoryRow(Base):
+    __tablename__ = "card_history"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    board_id: Mapped[str] = mapped_column(String(36), index=True)
+    card_id: Mapped[str] = mapped_column(String(36), index=True)
+    actor_id: Mapped[str] = mapped_column(String(36))
+    action: Mapped[str] = mapped_column(String(40))
+    before_title: Mapped[str] = mapped_column(String(200), default="")
+    after_title: Mapped[str] = mapped_column(String(200), default="")
+    before_column_id: Mapped[str] = mapped_column(String(36), default="")
+    after_column_id: Mapped[str] = mapped_column(String(36), default="")
+
+class RefreshTokenRow(Base):
+    __tablename__ = "refresh_tokens"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    revoked: Mapped[int] = mapped_column(Integer, default=0)
