@@ -5,11 +5,11 @@ from app.kernel.ids import new_id
 from app.models import BoardRow, CardRow, ColumnRow, MembershipRow, UserRow
 
 STAGES = [
-    ("Backlog", "Ready ideas. Not started. No WIP limit required.", None),
-    ("To Do", "Committed. Next to pull. Definition of ready is clear.", 8),
-    ("In Progress", "Actively worked. Pull only if this column is under WIP.", 3),
-    ("Review", "PR approved + QA passed. Policy visible on the column.", 3),
-    ("Done", "Accepted by the manager. No further work.", None),
+    ("Backlog", "Ready ideas. Not started.", None),
+    ("To Do", "Committed. Next to pull.", 8),
+    ("In Progress", "Actively worked.", 3),
+    ("Review", "PR approved + QA passed.", 3),
+    ("Done", "Accepted by the manager.", None),
 ]
 
 class BoardService:
@@ -25,6 +25,7 @@ class BoardService:
             start_date=str(extra.get("start_date") or "")[:32],
             end_date=str(extra.get("end_date") or "")[:32],
             budget=str(extra.get("budget") or "")[:32],
+            status=str(extra.get("status") or "backlog")[:24],
         )
         member = MembershipRow(id=new_id(), board_id=board.id, user_id=user_id, role="owner")
         cols = [ColumnRow(id=new_id(), board_id=board.id, title=name, position=i, policy=policy, wip_limit=limit) for i, (name, policy, limit) in enumerate(STAGES)]
@@ -32,7 +33,7 @@ class BoardService:
         self.db.commit()
         return board
 
-    def get(self, board_id: str) -> BoardRow | None:
+    def get(self, board_id: str):
         return self.db.get(BoardRow, board_id)
 
     def archive(self, board_id: str) -> BoardRow:
@@ -43,15 +44,23 @@ class BoardService:
         self.db.commit()
         return board
 
+    def set_status(self, board_id: str, status: str) -> BoardRow:
+        board = self.get(board_id)
+        if not board:
+            raise NotFound("Board not found")
+        board.status = status
+        self.db.commit()
+        return board
+
     def list_for(self, board_ids: list[str]) -> list[BoardRow]:
         if not board_ids:
             return []
         return list(self.db.scalars(select(BoardRow).where(BoardRow.id.in_(board_ids), BoardRow.is_archived == 0)))
 
-    def columns(self, board_id: str) -> list[ColumnRow]:
+    def columns(self, board_id: str):
         return list(self.db.scalars(select(ColumnRow).where(ColumnRow.board_id == board_id).order_by(ColumnRow.position)))
 
-    def cards(self, board_id: str) -> list[CardRow]:
+    def cards(self, board_id: str):
         return list(self.db.scalars(select(CardRow).where(CardRow.board_id == board_id).order_by(CardRow.position)))
 
     def add_card(self, board_id: str, column_id: str, title: str) -> CardRow:
@@ -81,7 +90,7 @@ class BoardService:
         self.db.commit()
         return card
 
-    def rename_card(self, card_id: str, title: str) -> CardRow | None:
+    def rename_card(self, card_id: str, title: str):
         card = self.db.get(CardRow, card_id)
         if not card:
             return None
