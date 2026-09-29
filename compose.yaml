@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: board
+      POSTGRES_PASSWORD: board
+      POSTGRES_DB: live_board
+    ports: ["5432:5432"]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  api:
+    build: ./backend
+    ports: ["8010:8010"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://board:board@postgres:5432/live_board
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:3010,http://127.0.0.1:3010
+    depends_on: [postgres, redis]
+  web:
+    build: ./frontend
+    ports: ["3010:3010"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8010
+    depends_on: [api]

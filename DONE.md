@@ -1,4 +1,4 @@
-# DONE — live-board
+# DONE
 
-Works: auth, boards, columns, cards, move, operation log, presence, WebSocket broadcast, isolation tests.
-Deferred: Redis presence, share links, CRDT list-order, httpOnly cookies.
+Works: refresh/logout, invite + share link, rename/add column, replay, history/undo, Redis presence when REDIS_URL is set, auth rate limit, compose, Dockerfiles.
+Deferred: CRDT list order, multi-region.
