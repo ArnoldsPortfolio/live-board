@@ -5,10 +5,9 @@ import { ReactNode, useEffect, useState } from "react";
 import { signOut } from "@/lib/api";
 
 const NAV = [
-  { href: "/dashboard", label: "Dashboard" },
+  { href: "/dashboard", label: "Project Dashboard" },
   { href: "/dashboard/calendar", label: "Calendar" },
   { href: "/dashboard/employees", label: "Employee" },
-  { href: "/dashboard", label: "Project" },
   { href: "/dashboard/activities", label: "Activities" },
   { href: "/dashboard/jobs", label: "Job Management" },
   { href: "/dashboard/payroll", label: "Payroll" },
@@ -24,16 +23,13 @@ export default function AppShell({ title, children }: { title: string; children:
   const [dark, setDark] = useState(false);
   const [email, setEmail] = useState("");
   const [updated, setUpdated] = useState("");
-
   useEffect(() => {
     setEmail(localStorage.getItem("email") ?? "");
     setUpdated(new Date().toLocaleDateString());
   }, []);
-
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
-
   return (
     <div className="sage">
       <aside className="sage-nav">
