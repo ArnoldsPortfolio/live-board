@@ -13,6 +13,9 @@ function parsePayload(raw: string | Record<string, string>): Record<string, stri
   if (typeof raw === "string") return JSON.parse(raw);
   return raw;
 }
+function uniqueCards(cards: Card[]) {
+  return cards.filter((card, i, all) => all.findIndex((row) => row.id === card.id) === i);
+}
 export default function BoardPage() {
   const params = useParams<{ id: string }>();
   const [board, setBoard] = useState<Board | null>(null);
@@ -29,14 +32,20 @@ export default function BoardPage() {
   function applyOp(current: Board, op: Op): Board {
     const payload = parsePayload(op.payload);
     const next = { ...current, sequence: op.sequence, cards: [...current.cards], columns: [...current.columns] };
-    if (op.kind === "card.added") next.cards.push({ id: payload.id, title: payload.title, column_id: payload.column_id, position: 0 });
+    if (op.kind === "card.added" && !next.cards.some((c) => c.id === payload.id)) {
+      next.cards.push({ id: payload.id, title: payload.title, column_id: payload.column_id, position: 0 });
+    }
     if (op.kind === "card.moved") next.cards = next.cards.map((c) => c.id === payload.id ? { ...c, column_id: payload.column_id } : c);
     if (op.kind === "card.renamed" || op.kind === "card.undone") next.cards = next.cards.map((c) => c.id === payload.id ? { ...c, title: payload.title ?? c.title, column_id: payload.column_id ?? c.column_id } : c);
-    if (op.kind === "column.added") next.columns.push({ id: payload.id, title: payload.title, position: Number(payload.position ?? next.columns.length) });
+    if (op.kind === "column.added" && !next.columns.some((c) => c.id === payload.id)) {
+      next.columns.push({ id: payload.id, title: payload.title, position: Number(payload.position ?? next.columns.length) });
+    }
+    next.cards = uniqueCards(next.cards);
     return next;
   }
   async function load() {
     const detail = await api<Board>(`/boards/${params.id}`);
+    detail.cards = uniqueCards(detail.cards);
     seq.current = detail.sequence;
     setBoard(detail);
   }
@@ -71,17 +80,17 @@ export default function BoardPage() {
       {error ? <p className="err">{error}</p> : null}
       <div className="board">
         {board.columns.map((column) => {
-          const count = board.cards.filter((c) => c.column_id === column.id).length;
+          const cards = uniqueCards(board.cards).filter((c) => c.column_id === column.id);
           return (
             <section className="col" key={column.id}>
-              <h3>{column.title} <span className="muted">{count}{column.wip_limit ? `/${column.wip_limit}` : ""}</span></h3>
+              <h3>{column.title} <span className="muted">{cards.length}{column.wip_limit ? `/${column.wip_limit}` : ""}</span></h3>
               <button type="button" onClick={() => api(`/boards/${board.id}/cards`, { method: "POST", body: JSON.stringify({ column_id: column.id, title }) }).then(load).catch((err: Error) => setError(err.message))}>+</button>
-              {board.cards.filter((card) => card.column_id === column.id).map((card) => (
+              {cards.map((card) => (
                 <article className={card.blocked ? "item blocked" : "item"} key={card.id} onClick={() => setOpen(card)}>
                   <p><span className={`chip ${card.priority || "med"}`}>{card.priority || "med"} priority</span></p>
                   <strong>{card.title}</strong>
                   <p className="muted">{card.description || "No description yet"}</p>
-                  <p className="muted">{card.due_date || "No date"}{card.checklist?.length ? ` · ${card.checklist.filter((i) => i.is_done).length}/${card.checklist.length}` : ""}</p>
+                  <p className="muted">{card.due_date || "No date"}</p>
                   {card.blocked ? <span className="chip bad">Blocked</span> : null}
                 </article>
               ))}
@@ -91,7 +100,6 @@ export default function BoardPage() {
       </div>
       {open ? (
         <aside className="drawer">
-          <p className="kicker">Card</p>
           <h2>{open.title}</h2>
           <textarea defaultValue={open.description} onBlur={(e) => api(`/boards/${board.id}/cards/${open.id}`, { method: "PATCH", body: JSON.stringify({ description: e.target.value }) }).then(load)} />
           <input type="date" defaultValue={open.due_date} onBlur={(e) => api(`/boards/${board.id}/cards/${open.id}`, { method: "PATCH", body: JSON.stringify({ due_date: e.target.value }) }).then(load)} />
@@ -101,7 +109,6 @@ export default function BoardPage() {
           <select value={open.column_id} onChange={(e) => api(`/boards/${board.id}/cards/${open.id}/move`, { method: "POST", body: JSON.stringify({ column_id: e.target.value }) }).then(load).catch((err: Error) => setError(err.message))}>
             {board.columns.map((opt) => <option key={opt.id} value={opt.id}>{opt.title}</option>)}
           </select>
-          <button type="button" onClick={() => api(`/boards/${board.id}/cards/${open.id}/block`, { method: "POST", body: JSON.stringify({ reason: "Blocked" }) }).then(load).then(() => setOpen({ ...open, blocked: !open.blocked }))}>{open.blocked ? "Clear blocked" : "Mark blocked"}</button>
           <input value={checkTitle} onChange={(e) => setCheckTitle(e.target.value)} placeholder="Checklist item" />
           <button type="button" onClick={() => api(`/boards/${board.id}/cards/${open.id}/checklist`, { method: "POST", body: JSON.stringify({ title: checkTitle }) }).then(load)}>Add check</button>
           <input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Comment" />
