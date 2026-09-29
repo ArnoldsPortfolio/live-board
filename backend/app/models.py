@@ -29,6 +29,12 @@ class BoardRow(Base):
     sequence: Mapped[int] = mapped_column(Integer, default=0)
     swimlane_mode: Mapped[str] = mapped_column(String(24), default="off")
     is_archived: Mapped[int] = mapped_column(Integer, default=0)
+    description: Mapped[str] = mapped_column(String(240), default="")
+    code: Mapped[str] = mapped_column(String(32), default="")
+    start_date: Mapped[str] = mapped_column(String(32), default="")
+    end_date: Mapped[str] = mapped_column(String(32), default="")
+    budget: Mapped[str] = mapped_column(String(32), default="")
+    status: Mapped[str] = mapped_column(String(24), default="backlog")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 class MembershipRow(Base):
@@ -127,3 +133,28 @@ class ActivityRow(Base):
     action: Mapped[str] = mapped_column(String(40))
     detail: Mapped[str] = mapped_column(String(240), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+class JobCandidateRow(Base):
+    __tablename__ = "job_candidates"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(String(36), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    role: Mapped[str] = mapped_column(String(120), default="")
+    stage: Mapped[str] = mapped_column(String(32), default="Applied")
+
+class PayrollPeriodRow(Base):
+    __tablename__ = "payroll_periods"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(String(36), index=True)
+    period: Mapped[str] = mapped_column(String(80))
+    status: Mapped[str] = mapped_column(String(24), default="Draft")
+    amount: Mapped[str] = mapped_column(String(32), default="$0")
+    people: Mapped[int] = mapped_column(Integer, default=0)
+
+class IntegrationRow(Base):
+    __tablename__ = "integrations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(String(36), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    detail: Mapped[str] = mapped_column(String(240), default="")
+    is_on: Mapped[int] = mapped_column(Integer, default=0)
