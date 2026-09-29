@@ -10,19 +10,15 @@ from app.features.calendar.router import router as calendar_router
 from app.features.identity.router import router as identity_router
 from app.features.realtime.router import router as realtime_router
 from app.features.team.router import router as team_router
+from app.features.jobs.router import router as jobs_router
+from app.features.payroll.router import router as payroll_router
+from app.features.integrations.router import router as integrations_router
 from app.migrate import apply_sqlite_patches
 from app.kernel.errors import DomainError
 from app.seed import seed_if_empty
 
 app = FastAPI(title="Live Board API", version="0.1.0", redirect_slashes=False)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_origin_regex=".*",
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_origin_regex=".*", allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
 @app.exception_handler(DomainError)
 async def domain_error(_, exc: DomainError):
@@ -52,3 +48,6 @@ app.include_router(projects_router)
 app.include_router(realtime_router)
 app.include_router(calendar_router)
 app.include_router(team_router)
+app.include_router(jobs_router)
+app.include_router(payroll_router)
+app.include_router(integrations_router)
