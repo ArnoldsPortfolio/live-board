@@ -69,6 +69,14 @@ class BoardService:
         self.db.commit()
         return card
 
+    def delete_card(self, board_id: str, card_id: str) -> str:
+        card = self.db.get(CardRow, card_id)
+        if not card or card.board_id != board_id:
+            raise NotFound("Card not found")
+        self.db.delete(card)
+        self.db.commit()
+        return card_id
+
     def column_count(self, column_id: str) -> int:
         return int(self.db.scalar(select(func.count()).select_from(CardRow).where(CardRow.column_id == column_id)) or 0)
 
