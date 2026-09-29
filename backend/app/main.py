@@ -15,7 +15,14 @@ from app.kernel.errors import DomainError
 from app.seed import seed_if_empty
 
 app = FastAPI(title="Live Board API", version="0.1.0", redirect_slashes=False)
-app.add_middleware(CORSMiddleware, allow_origins=settings.origin_list(), allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_origin_regex=".*",
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(DomainError)
 async def domain_error(_, exc: DomainError):
