@@ -3,7 +3,7 @@ from sqlalchemy.engine import Engine
 
 ADDS = {
     "users": [("name", "TEXT DEFAULT ''"), ("role", "TEXT DEFAULT 'member'"), ("avatar_path", "TEXT DEFAULT ''"), ("is_active", "INTEGER DEFAULT 1")],
-    "boards": [("swimlane_mode", "TEXT DEFAULT 'off'"), ("is_archived", "INTEGER DEFAULT 0")],
+    "boards": [("swimlane_mode", "TEXT DEFAULT 'off'"), ("is_archived", "INTEGER DEFAULT 0"), ("description", "TEXT DEFAULT ''"), ("code", "TEXT DEFAULT ''"), ("start_date", "TEXT DEFAULT ''"), ("end_date", "TEXT DEFAULT ''"), ("budget", "TEXT DEFAULT ''")],
     "board_columns": [("policy", "TEXT DEFAULT ''"), ("wip_limit", "INTEGER")],
     "cards": [("description", "TEXT DEFAULT ''"), ("assignee_id", "TEXT DEFAULT ''"), ("due_date", "TEXT DEFAULT ''"), ("priority", "TEXT DEFAULT 'med'"), ("labels", "TEXT DEFAULT '[]'"), ("color", "TEXT DEFAULT '#d4af6e'"), ("blocked", "INTEGER DEFAULT 0"), ("blocked_reason", "TEXT DEFAULT ''")],
 }
